@@ -249,6 +249,37 @@ PORT (
 END COMPONENT;
 
 
+COMPONENT oric_ula is
+  Port (
+    CLK_24 : in  std_logic;              -- 12 MHz clock
+    nRESET : in  std_logic;              -- Asynchronous reset
+    AH     : in  std_logic_vector(15 downto 0); -- Address bits 15:8 from 6502
+    D      : in  std_logic_vector(7 downto 0); -- Data bus
+    RnW    : in  std_logic;              -- 6502 read signal indicator
+    nMAP   : in  std_logic;              -- From expansion bus
+    RC     : out std_logic_vector(15 downto 0); -- Row/column address to 4164 RAMs
+    MXSEL  : out std_logic;              -- DRAM mux select
+    nROM   : out std_logic;              -- ROM chip select
+	 nRAM   : out std_logic;              -- RAM chip select
+	 SRAM_CE   : out std_logic;              -- RAM chip select
+    PHI    : out std_logic;              -- Output clock
+	 PHI_EN: out std_logic;
+    PHI_EN_N: out std_logic;
+    CAS    : out std_logic;              -- DRAM Column Access Strobe, active high
+    RAS    : out std_logic;              -- DRAM Row Access Strobe, active high
+    WE     : out std_logic;              -- DRAM Write Enable, active high
+    nIO    : out std_logic;              -- 6522 chip select
+    SYNC   : out std_logic;              -- Composite sync signal
+	 HSYNC  : out std_logic;
+	 VSYNC  : out std_logic;
+	 HBLANK : out std_logic;
+	 VBLANK : out std_logic;
+    RED    : out std_logic;              -- Red video output
+    GREEN  : out std_logic;              -- Green video output
+    BLUE   : out std_logic               -- Blue video output
+  );
+end COMPONENT;
+
 begin
 
 cpu_irq <=  via1_irq_n and via2_irq_n  and cont_irq and acia_irq;
@@ -270,14 +301,10 @@ inst_cpu : entity work.T65
       DO      		=> cpu_do
 );
 
-
-ram_ad  <= ula_AD_SRAM when (ula_PHI2 = '0')else cpu_ad(15 downto 0);
-
-
+ram_ad  <= ula_AD_SRAM when (ula_PHI2 = '0') else cpu_ad(15 downto 0);
 ram_d   <= cpu_do;
 SRAM_DO <= ram_q;
 ram_cs  <= '0' when RESETn = '0' else ula_CE_SRAM;
-ram_oe  <= '0' when RESETn = '0' else ula_OE_SRAM;
 ram_we  <= '0' when RESETn = '0' else ula_WE_SRAM;
 phi2    <= ula_PHI2;
 
@@ -532,6 +559,33 @@ HCS10017 : entity work.HCS10017
 		HSYNC      	=> VIDEO_HSYNC,
 		VSYNC      	=> VIDEO_VSYNC		
 );
+
+			
+--HCS10017: oric_ula
+--   port map (
+--      CLK_24      => CLK_IN,
+--      PHI       	=> ula_phi2,
+--		PHI_EN     => ENA_1MHZ,
+--		PHI_EN_N   => ENA_1MHZ_N,
+--      RnW        	=> cpu_rw,
+--      nRESET     	=> pll_locked,
+--		nMAP      	=> ula_MAPn,
+--      D          	=> SRAM_DO,
+--      AH       	=> cpu_ad(15 downto 0),
+--      RC    	   => ula_AD_SRAM,
+--		nRAM    	   => ula_CSRAMn,
+--		WE    	   => ula_WE_SRAM,
+--		SRAM_CE    	=> ula_CE_SRAM,
+--	   nIO         => ula_CSIOn,
+--      RED        	=> VIDEO_R,
+--      GREEN      	=> VIDEO_G,
+--      BLUE        => VIDEO_B,
+--		HBLANK      => VIDEO_HBLANK,
+--		VBLANK      => VIDEO_VBLANK,
+--		HSYNC      	=> VIDEO_HSYNC,
+--		VSYNC      	=> VIDEO_VSYNC		
+--);
+
 
 inst_ACIA : work.ACIA
    port map(

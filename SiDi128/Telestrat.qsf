@@ -421,4 +421,6 @@ set_global_assignment -name VERILOG_MACRO "USE_CLOCK_50=1"
 set_global_assignment -name QIP_FILE "../mist-modules/mist.qip"
 set_global_assignment -name QIP_FILE ../files.qip
 set_global_assignment -name QIP_FILE pll.qip
+set_global_assignment -name VERILOG_FILE ../rtl/oric_ula.v
+set_global_assignment -name VHDL_FILE ../rtl/Twilighte.vhd
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

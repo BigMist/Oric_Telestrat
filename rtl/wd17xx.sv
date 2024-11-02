@@ -80,6 +80,14 @@ parameter MODEL           = 0;         // 0 - wd1770, 1 - fd1771, 2 - wd1772, 3 
 parameter EDSK            = 0;         // Supports Amstrad EDSK preservation format
 parameter CLK_EN          = 16'd32000; // in kHz
 parameter TOT_DISKS       = 2;         // floppy drives under the controller
+// Parameters for delay and timeout
+parameter HLT_DELAY = 1000000;  // Adjust based on required delay for HLT in clock cycles
+parameter HLD_TIMEOUT = 10;     // Number of index hole counts for HLD timeout
+
+reg [31:0] hlt_counter = 0;      // Counter for HLT delay
+reg [3:0] hld_index_count = 0;   // Counter for index hole (simulating spin-down count)
+reg hlt_waiting = 0;             // Flag for HLT waiting state
+
 
 wire invalid_drive= fdd_sel > (TOT_DISKS-1);
 
@@ -101,7 +109,8 @@ assign drq       = s_drq;
 assign busy      = s_busy;
 assign intrq     = s_intrq;
 assign prepare   = EDSK ? scan_active  : img_mounted[fdd_sel];
-assign s_headloaded = hld && hlt;
+//assign s_headloaded = hld && hlt;
+assign s_headloaded = hlt;
 always @(posedge clk_sys) begin
      sd_lba[fdd_sel] <= scan_active ? scan_addr[20:9] : buff_a[20:9] + sd_block;
 end
@@ -117,6 +126,22 @@ wire  [7:0] buff_dout[TOT_DISKS];
 reg   [1:0] sd_block = 0;
 reg         format;
 reg         verify;
+
+
+wire out_20ms,out_900ms;
+wire step;
+monostable_20ms	b2v_inst(
+	.clk(ce),
+	.stb(step),
+	.q(out_20ms));
+
+
+monostable_900ms	b2v_inst1(
+	.clk(ce),
+	.stb(hld),
+	.q(out_900ms));
+
+assign	hlt =  ~out_20ms &  ~out_900ms;
 
 
 genvar                tla_i;
@@ -339,17 +364,6 @@ wire        rde = rd & io_en;
 wire        wre = wr & io_en;
 
 always @(posedge clk_sys) begin
-  reg old_hld;
-    old_hld <= hld;
-	 
-    if(old_hld && ~hld) hlt <= 0;
-    if(hld && s_motor)  hlt <= 1;
-    if (img_mounted[fdd_sel])          disk_change_n <= 0;
-    if (~disk_change_reset_n) disk_change_n <= 1;
-end
-
-
-always @(posedge clk_sys) begin
 	reg old_wr, old_rd;
 
 	reg [2:0] cur_addr;
@@ -398,6 +412,7 @@ always @(posedge clk_sys) begin
 		write_data <= 0;
 		multisector <= 0;
 		step_direction <= 0;
+		step <=0;
 		disk_track <= 0;
 		wdreg_track <= 0;
 		wdreg_sector <= 0;  //REAL 0
@@ -408,7 +423,7 @@ always @(posedge clk_sys) begin
 		buff_wr <= 0;
 		state <= STATE_IDLE;
 		s_wpe <= 1;
-		hld   <= 0;
+		hld <=0;
 		{RNF, s_crcerr, s_intrq} <= 0;
 		{s_wrfault, s_lostdata} <= 0;
 		s_drq_busy <= 0;
@@ -707,7 +722,7 @@ always @(posedge clk_sys) begin
 							cmd_type_wr<= (din[7:5] == 3'b101) || (din[7:4] == 4'b1111);
 							s_wpe    <= ~din[7];
 							s_motor_tick <= (cmd_type_1 ||cmd_type_2 ||cmd_type_3) ? 1'b1 :1'b0;
-							
+							step <=0;
 							case (din[7:4])
 							'h0: 	// RESTORE
 								begin
@@ -750,7 +765,7 @@ always @(posedge clk_sys) begin
 									if (din[4]) wdreg_track <= next_track;
 
 									hld <= din[3];
-
+                           step <= 1;
 									// some programs like it when FDC gets busy for a while
 									s_drq_busy <= 2'b01;
 									state <= STATE_WAIT;

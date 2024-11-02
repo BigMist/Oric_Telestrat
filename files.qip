@@ -22,6 +22,8 @@ set_global_assignment -name VHDL_FILE ../rtl/via6522.vhd
 set_global_assignment -name VHDL_FILE ../rtl/video.vhd
 set_global_assignment -name VHDL_FILE ../rtl/telestrat.vhd
 set_global_assignment -name VHDL_FILE ../rtl/dpram.vhd
+set_global_assignment -name VHDL_FILE ../rtl/monostable_900ms.vhd
+set_global_assignment -name VHDL_FILE ../rtl/monostable_20ms.vhd
 set_global_assignment -name QIP_FILE ../rtl/cart.qip
 set_global_assignment -name VERILOG_FILE ../rtl/cassette.v
 set_global_assignment -name VERILOG_FILE ../rtl/square_gen.v

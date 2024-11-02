@@ -151,8 +151,8 @@ wire TAPE_SOUND=UART_RX;
 `include "build_id.v"
 localparam CONF_STR = {
 	"TeleStrat;;",
-	"S0,DSKIMG,Mount Drive A:;",
-//	"S1,DSKIMG,Mount Drive B:;",
+	"S0U,DSKIMG,Mount Drive A:;",
+//	"S1U,DSKIMG,Mount Drive B:;",
 	"F2,ROM,Load Cartridge;",
 	"O1,BANK4,ROM,RAM;",
 	"-;",
@@ -242,44 +242,6 @@ reg  [31:0] status_out;
 wire [21:0] gamma_bus;
 wire        freeze_sync;
 wire [64:0] rtc;
-
-
-
-//hps_io #(.CONF_STR(CONF_STR), .VDNUM(TOT_DISKS)) hps_io
-//(
-//	.clk_sys(clk_sys),
-//	.HPS_BUS(HPS_BUS),
-//
-//	.ps2_key(ps2_key),
-//
-//	.joystick_0(joy0),
-//	.joystick_1(joy1),
-//	.buttons(buttons),
-//	.forced_scandoubler(forced_scandoubler),
-//	.status(status),
-//	.RTC(rtc),
-//
-//	.sd_lba(sd_lba),
-//	.sd_rd(sd_rd),
-//	.sd_wr(sd_wr),
-//	.sd_ack(sd_ack),
-//	.sd_buff_addr(sd_buff_addr),
-//	.sd_buff_dout(sd_buff_dout),
-//	.sd_buff_din(sd_buff_din),
-//	.sd_buff_wr(sd_buff_wr),
-//	.img_mounted(img_mounted),
-//	.img_size(img_size),
-//	.img_readonly(img_readonly),
-//
-//	.ioctl_wr(ioctl_wr),
-//	.ioctl_addr(ioctl_addr),
-//	.ioctl_dout(ioctl_dout),
-//	.ioctl_download(ioctl_download),
-//	.ioctl_index(ioctl_index),
-//	.gamma_bus(gamma_bus)
-//);
-
-
 
 
 
@@ -802,10 +764,11 @@ wd17xx #(.EDSK(1),.MODEL(3),.CLK_EN(24000),.TOT_DISKS(TOT_DISKS)) fdd1
 	.ready     (1),//(fdd_ready),
 	.prepare   (fdd_prepare),
 	.busy      (fdd_led),
-	.hld       (fdd_hld),
+	.hld       (),
 	.fdd_sel   (fdc_sel)
 );
 
+assign fdd_hld = img_mounted;
 
 endmodule
 
